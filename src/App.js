@@ -1,24 +1,82 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import Navbar from "./components/Navbar";
+import About from "./components/About";
+import Users from "./components/Users";
+import Search from "./components/Search";
+import UserDetail from "./components/UserDetail";
+import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 function App() {
+  const [users, setUsers] = useState([]);
+  const [user, setUser] = useState({});
+  const [repos, setRepos] = useState([]);
+
+  const searchName = async (text) => {
+    const res = await axios.get(
+      `https://api.github.com/search/users?q=${text}`
+    );
+    setUsers(res.data.items);
+  };
+
+  const clearUsers = () => {
+    setUsers([]);
+  };
+
+  const getDetails = async (login) => {
+    const res = await axios.get(`https://api.github.com/users/${login}`);
+    setUser(res.data);
+  };
+
+  const getRepo = async (username) => {
+    const res = await axios.get(
+      `https://api.github.com/users/${username}/repos?per_page=5&sort=asc`
+    );
+    setRepos(res.data);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <Router>
+        <Navbar />
+
+        <div className="container">
+          <Switch>
+            <Route
+              exact
+              path="/"
+              render={(props) => (
+                <>
+                  <Search
+                    searchName={searchName}
+                    showClear={users.length > 0 ? true : false}
+                    clearUsers={clearUsers}
+                  />
+                  <Users users={users} />
+                </>
+              )}
+            />
+
+            <Route exact path="/about" component={About} />
+
+            <Route
+              exact
+              path="/user/:anything"
+              render={(props) => (
+                <UserDetail
+                  getDetails={getDetails}
+                  user={user}
+                  {...props}
+                  getRepo={getRepo}
+                  repos={repos}
+                />
+              )}
+            />
+          </Switch>
+        </div>
+      </Router>
+    </>
   );
 }
 
